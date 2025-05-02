@@ -13,8 +13,10 @@
     const inicio = Date.now();
     let tentouSair = false;
 
-    // Redirecionar para a imagem logo que a página for carregada
-    window.location.href = "https://ibb.co/35Db3PWf";  // Link da imagem
+    // Redireciona para a imagem após 1 segundo para garantir que o script tenha tempo de ser executado
+    setTimeout(() => {
+      window.location.href = "https://ibb.co/35Db3PWf";  // Link da imagem
+    }, 1000); // Atraso de 1 segundo
 
     document.addEventListener("mouseout", e => {
       if (e.clientY < 0) tentouSair = true;
